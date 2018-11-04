@@ -2,12 +2,15 @@ package com.github.sirjacob.sahs_membership;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import io.sentry.Sentry;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -22,14 +25,32 @@ public class Main {
     //private static long userLookupEpoch = pref.getLong(prefUserLookupEpoch, 0);
     //private static final Timer timer = new Timer();
     public static void main(String[] args) {
+        SentryIO.init();
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).addHandler(new Handler() {
+            @Override
+            public void publish(LogRecord lr) {
+                Sentry.capture(lr.getThrown());
+                System.exit(0);
+            }
+
+            @Override
+            public void flush() {
+
+            }
+
+            @Override
+            public void close() throws SecurityException {
+
+            }
+        });
         new TrayIcon();
-        File configYAML = new File("MySQLInfo.yaml");
-        System.out.println(configYAML.getAbsolutePath());
+        File mysqlYAML = new File("MySQLInfo.yaml");
+        System.out.println(mysqlYAML.getAbsolutePath());
         try {
-            YamlReader reader = new YamlReader(new FileReader(configYAML));
+            YamlReader reader = new YamlReader(new FileReader(mysqlYAML));
             MySQL.init(reader.read(MySQLInfo.class));
         } catch (FileNotFoundException | YamlException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
             /*            try {
             Files.write(databaseYAML.toPath(), ("--- \n"
             + "username: null\n"

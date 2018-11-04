@@ -77,7 +77,7 @@ public class TrayIcon {
 
             SystemTray.getSystemTray().add(trayIcon);
         } catch (AWTException ex) {
-            Logger.getLogger(TrayIcon.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
         }
     }
 }

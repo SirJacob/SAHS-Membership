@@ -39,7 +39,7 @@ public class MySQL {
             stmt.close();
             conn.close();
         } catch (SQLException ex) {
-            Logger.getLogger(MySQL.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
         }
     }
 }

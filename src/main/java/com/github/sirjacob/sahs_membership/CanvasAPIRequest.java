@@ -27,7 +27,7 @@ public class CanvasAPIRequest {
             try {
                 access_token = Files.readAllLines(new File("CanvasAccessToken.txt").toPath()).get(0);
             } catch (IOException ex) {
-                Logger.getLogger(CanvasAPIRequest.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -78,7 +78,7 @@ public class CanvasAPIRequest {
             in.close();
             return body;
         } catch (IOException ex) {
-            Logger.getLogger(CanvasAPIRequest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
         }
         return null;
     }
