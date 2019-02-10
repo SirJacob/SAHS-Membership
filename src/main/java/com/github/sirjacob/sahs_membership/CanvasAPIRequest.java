@@ -23,6 +23,9 @@ public class CanvasAPIRequest {
     private static String access_token;
     private static final String URL_PREFIX = "https://canvas.instructure.com/api/v1/";
 
+    private static final ArrayList<String> LOGIN_IDS = new ArrayList();
+    private static int page = 1;
+
     public static void init() {
         if (access_token == null) {
             try {
@@ -61,9 +64,12 @@ public class CanvasAPIRequest {
 //}*/
     private static Any getMembers() {
         //https://canvas.instructure.com/api/v1/courses/57030000000004505/users?access_token=XXX&per_page=999&include[]=avatar_url&include[]=enrollments
-        String requestURL = URL_PREFIX + "courses/" + COURSE_ID + "/users?access_token=" + access_token + "&per_page=999&include[]=avatar_url&include[]=enrollments";
+        String requestURL = URL_PREFIX + "courses/" + COURSE_ID + "/users?access_token=" + access_token + "&per_page=100&page=" + page++ + "&include[]=avatar_url&include[]=enrollments";
         System.out.println(requestURL);
         Any json = JsonIterator.deserialize(readWebpage(requestURL));
+        if (json.toString().equals("[]")) {
+            page = -1;
+        }
         return json;
     }
 
@@ -85,55 +91,66 @@ public class CanvasAPIRequest {
     }
 
     public static void updateMembershipDatabase() {
+        /* method that updates terminating var must be outside of terminating
+        condition */
         Any members = getMembers();
-        System.out.println("Members: " + members);
-        ArrayList<String> loginIDs = new ArrayList();
-        for (Any any : members) {
-            String login_id = String.valueOf(any.get("login_id"));
-            String name = String.valueOf(any.get("name"));
-            
-            String enrollment_type = String.valueOf(any.get("enrollments").get(0).get("type"));
-            switch (enrollment_type) {
-                case "StudentEnrollment":
-                    // TODO: Check enrollment_state under enrollments for better verification
-                    if (login_id.isEmpty()) {
-                        //enrollment_type = "pending";
-                        continue; /* The DB doesn't store pending members
-                        their login_id cannot be retrieved. */
-                    } else {
-                        enrollment_type = "student";
-                    }
-                    break;
-                case "TaEnrollment":
-                    enrollment_type = "ta";
-                    break;
-                case "TeacherEnrollment":
-                    enrollment_type = "teacher";
-                    break;
-                default: // Whoops, something went wrong! Wasn't expecting that.
-                    //enrollment_type = null;
-                    continue;
-            }
-            loginIDs.add("'" + login_id + "'"); // Help prepare for DELETE stmt 
-            /* If the member's avatar is the default canvas one,
-            set the avatar_url to "". The DB will convert this to NULL on its
-            end. */
-            String avatar_url = String.valueOf(any.get("avatar_url"));
-            if ("https://canvas.instructure.com/images/messages/avatar-50.png".equals(avatar_url)) {
-                avatar_url = ""; // TODO: Can't use null because String.format converts to "null"
-            }
-            /* INSERT member into DB.
-            If already exists, update enrollment_type & avatar_url */
-            String statement = String.format("INSERT INTO `members` (`login_id`, `name`, `enrollment_type`, `avatar_url`) VALUES ('%s', '%s', '%s', '%s') ON DUPLICATE KEY UPDATE `enrollment_type` = '%s', `avatar_url` = '%s';",
-                    login_id, name, enrollment_type, avatar_url, enrollment_type, avatar_url);
+        if (page == -1) { // terminating condition
+            /* Remove members from the DB that are no longer in SAHS */
+            String loginIDsString = LOGIN_IDS.toString();
+            loginIDsString = loginIDsString.substring(1, loginIDsString.length() - 1);
+            String statement = String.format("DELETE FROM `members` WHERE NOT `login_id` IN (%s)", loginIDsString);
             System.out.println(statement);
             MySQL.executeUpdate(statement);
+
+            /* Reset vars for next timer call */
+            page = 1;
+            LOGIN_IDS.clear();
+        } else {
+            System.out.println("Members: " + members);
+            for (Any any : members) {
+                String login_id = String.valueOf(any.get("login_id"));
+                String name = String.valueOf(any.get("name"));
+
+                String enrollment_type = String.valueOf(any.get("enrollments").get(0).get("type"));
+                switch (enrollment_type) {
+                    case "StudentEnrollment":
+                        // TODO: Check enrollment_state under enrollments for better verification
+                        if (login_id.isEmpty()) {
+                            //enrollment_type = "pending";
+                            continue;
+                            /* The DB doesn't store pending members
+                        their login_id cannot be retrieved. */
+                        } else {
+                            enrollment_type = "student";
+                        }
+                        break;
+                    case "TaEnrollment":
+                        enrollment_type = "ta";
+                        break;
+                    case "TeacherEnrollment":
+                        enrollment_type = "teacher";
+                        break;
+                    default: // Whoops, something went wrong! Wasn't expecting that.
+                        //enrollment_type = null;
+                        continue;
+                }
+                LOGIN_IDS.add("'" + login_id + "'"); // Help prepare for DELETE stmt 
+                /* If the member's avatar is the default canvas one,
+            set the avatar_url to "". The DB will convert this to NULL on its
+            end. */
+                String avatar_url = String.valueOf(any.get("avatar_url"));
+                if ("https://canvas.instructure.com/images/messages/avatar-50.png".equals(avatar_url)) {
+                    avatar_url = ""; // TODO: Can't use null because String.format converts to "null"
+                }
+                /* INSERT member into DB.
+            If already exists, update enrollment_type & avatar_url */
+                String statement = String.format("INSERT INTO `members` (`login_id`, `name`, `enrollment_type`, `avatar_url`) VALUES ('%s', '%s', '%s', '%s') ON DUPLICATE KEY UPDATE `enrollment_type` = '%s', `avatar_url` = '%s';",
+                        login_id, name, enrollment_type, avatar_url, enrollment_type, avatar_url);
+                System.out.println(statement);
+                MySQL.executeUpdate(statement);
+            }
+
+            updateMembershipDatabase(); // recurse
         }
-        /* Remove members from the DB that are no longer in SAHS */
-        String loginIDsString = loginIDs.toString();
-        loginIDsString = loginIDsString.substring(1,loginIDsString.length()-1);
-        String statement = String.format("DELETE FROM `members` WHERE NOT `login_id` IN (%s)", loginIDsString);
-        System.out.println(statement);
-        MySQL.executeUpdate(statement);
     }
 }
