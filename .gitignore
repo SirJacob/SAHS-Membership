@@ -75,5 +75,6 @@ MySQLInfo.yaml
 SentryDSN.txt
 nbactions.xml
 target/*
+event_data/*
 
 # End of custom .gitignore
