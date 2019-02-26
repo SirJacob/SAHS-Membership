@@ -111,12 +111,13 @@ public class CanvasAPIRequest {
         return null;
     }
 
-    public static void updateMembershipDatabase() {
+    public static boolean updateMembershipDatabase() {
         /* method that updates terminating var must be outside of terminating
         condition */
         Any members = getMembers();
         if (members == null) {
             Sentry.capture("updateMembershipDatabase() call skipped.");
+            return false;
         } else if (page == -1) { // terminating condition
             /* Remove members from the DB that are no longer in SAHS */
             String loginIDsString = LOGIN_IDS.toString();
@@ -175,5 +176,6 @@ public class CanvasAPIRequest {
 
             updateMembershipDatabase(); // recurse
         }
+        return true;
     }
 }

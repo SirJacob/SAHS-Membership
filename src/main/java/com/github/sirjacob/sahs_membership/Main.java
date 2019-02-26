@@ -24,6 +24,8 @@ public class Main {
     //private static final long UserLookupInterval = 60 * 60 * 24; // 24 hours
     //private static long userLookupEpoch = pref.getLong(prefUserLookupEpoch, 0);
     //private static final Timer timer = new Timer();
+    private static final String FADING_POPUP_PREFIX = "SAHS Membership DB Update - ";
+
     public static void main(String[] args) {
         SentryIO.init();
         Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).addHandler(new Handler() {
@@ -70,9 +72,11 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                new FadingPopup("SAHS Membership DB Update - Started");
-                CanvasAPIRequest.updateMembershipDatabase();
-                new FadingPopup("SAHS Membership DB Update - Finished");
+                new FadingPopup(FADING_POPUP_PREFIX + "Started");
+                if (CanvasAPIRequest.updateMembershipDatabase()) {
+                    new FadingPopup(FADING_POPUP_PREFIX + "Finished");
+                }
+                new FadingPopup(FADING_POPUP_PREFIX + "Failed!");
             }
         }, 0, 1000 * 60 * 60 * 1); //every hour
     }
