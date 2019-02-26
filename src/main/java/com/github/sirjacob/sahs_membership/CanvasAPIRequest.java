@@ -22,7 +22,7 @@ import org.apache.commons.io.IOUtils;
 public class CanvasAPIRequest {
 
     private static final long COURSE_ID = 57030000000004505L;
-    private static String access_token;
+    static String access_token;
     private static final String URL_PREFIX = "https://canvas.instructure.com/api/v1/";
 
     private static final ArrayList<String> LOGIN_IDS = new ArrayList();

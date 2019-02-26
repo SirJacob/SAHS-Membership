@@ -41,8 +41,11 @@ public class SentryIO {
 
     public static void recordBreadcrumb(String message, Breadcrumb.Level level) {
         Sentry.getContext().recordBreadcrumb(
-                new BreadcrumbBuilder().setMessage(message).setLevel(level).build()
+                new BreadcrumbBuilder().setMessage(filterLog(message)).setLevel(level).build()
         );
     }
 
+    private static String filterLog(String message) {
+        return message.replaceAll(CanvasAPIRequest.access_token, "HIDDEN");
+    }
 }
