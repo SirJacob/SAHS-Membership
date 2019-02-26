@@ -2,11 +2,13 @@ package com.github.sirjacob.sahs_membership;
 
 import com.jsoniter.JsonIterator;
 import com.jsoniter.any.Any;
+import io.sentry.Sentry;
+import io.sentry.event.Breadcrumb;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -66,24 +68,43 @@ public class CanvasAPIRequest {
         //https://canvas.instructure.com/api/v1/courses/57030000000004505/users?access_token=XXX&per_page=999&include[]=avatar_url&include[]=enrollments
         String requestURL = URL_PREFIX + "courses/" + COURSE_ID + "/users?access_token=" + access_token + "&per_page=100&page=" + page++ + "&include[]=avatar_url&include[]=enrollments";
         System.out.println(requestURL);
-        Any json = JsonIterator.deserialize(readWebpage(requestURL));
-        if (json.toString().equals("[]")) {
-            page = -1;
+        String webpage = readWebpage(requestURL);
+        if (webpage != null) {
+            Any json = JsonIterator.deserialize(webpage);
+            if (json.toString().equals("[]")) {
+                page = -1;
+            }
+            return json;
+        } else {
+            return null;
         }
-        return json;
     }
 
     private static String readWebpage(String address) {
         InputStream in;
         try {
             URL url = new URL(address);
-            URLConnection con = url.openConnection();
-            in = con.getInputStream();
-            String encoding = con.getContentType();  // ** WRONG: should use "con.getContentType()" instead but it returns something like "text/html; charset=UTF-8" so this value must be parsed to extract the actual encoding
-            encoding = encoding == null ? "UTF-8" : encoding.substring(encoding.indexOf("charset=") + 8);
-            String body = IOUtils.toString(in, encoding);
-            in.close();
-            return body;
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.connect();
+            int responseCode = con.getResponseCode();
+            if (responseCode == 200) { // Ensure reponse from API is served. 200 OK
+                in = con.getInputStream();
+                String encoding = con.getContentType();  // ** WRONG: should use "con.getContentType()" instead but it returns something like "text/html; charset=UTF-8" so this value must be parsed to extract the actual encoding
+                encoding = encoding == null ? "UTF-8" : encoding.substring(encoding.indexOf("charset=") + 8);
+                String body = IOUtils.toString(in, encoding);
+                in.close();
+                return body;
+            } else {
+                Breadcrumb.Level level;
+                if (responseCode == 503) { // 503 Service Unavailable
+                    level = SentryIO.INFO;
+                    /* We expect that from time to time the
+                    API service will be unavailable. */
+                } else {
+                    level = SentryIO.WARNING;
+                }
+                SentryIO.recordBreadcrumb(String.format("Server returned HTTP response code: %s for URL: %s", responseCode, address), level);
+            }
         } catch (IOException ex) {
             Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
         }
@@ -94,7 +115,9 @@ public class CanvasAPIRequest {
         /* method that updates terminating var must be outside of terminating
         condition */
         Any members = getMembers();
-        if (page == -1) { // terminating condition
+        if (members == null) {
+            Sentry.capture("updateMembershipDatabase() call skipped.");
+        } else if (page == -1) { // terminating condition
             /* Remove members from the DB that are no longer in SAHS */
             String loginIDsString = LOGIN_IDS.toString();
             loginIDsString = loginIDsString.substring(1, loginIDsString.length() - 1);
