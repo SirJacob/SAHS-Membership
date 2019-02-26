@@ -75,8 +75,9 @@ public class Main {
                 new FadingPopup(FADING_POPUP_PREFIX + "Started");
                 if (CanvasAPIRequest.updateMembershipDatabase()) {
                     new FadingPopup(FADING_POPUP_PREFIX + "Finished");
+                } else {
+                    new FadingPopup(FADING_POPUP_PREFIX + "Failed!");
                 }
-                new FadingPopup(FADING_POPUP_PREFIX + "Failed!");
             }
         }, 0, 1000 * 60 * 60 * 1); //every hour
     }
