@@ -6,6 +6,12 @@ import io.sentry.Sentry;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Handler;
@@ -77,6 +83,13 @@ public class Main {
                     new FadingPopup(FADING_POPUP_PREFIX + "Finished");
                 } else {
                     new FadingPopup(FADING_POPUP_PREFIX + "Failed!");
+                }
+                List<String> lines = CanvasAPIRequest.names;
+                Path file = Paths.get("export_names.txt");
+                try {
+                    Files.write(file, lines, StandardCharsets.UTF_8);
+                } catch (IOException ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }, 0, 1000 * 60 * 60 * 1); //every hour

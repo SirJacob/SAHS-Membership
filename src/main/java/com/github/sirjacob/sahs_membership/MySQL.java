@@ -35,12 +35,12 @@ public class MySQL {
      * @param statement
      */
     public static void executeUpdate(String statement) {
-        try (Connection conn = DATA_SOURCE.getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(statement);
-
+        /*        try (Connection conn = DATA_SOURCE.getConnection(); Statement stmt = conn.createStatement()) {
+        stmt.executeUpdate(statement);
+        
         } catch (SQLException ex) {
-            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
-        }
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
+        }*/
     }
 
     /**
@@ -50,18 +50,19 @@ public class MySQL {
      * @return
      */
     public static HashMap executeQuery(String statement) {
-        HashMap hm = new HashMap();
+        return null;
+        /*        HashMap hm = new HashMap();
         try {
-            Connection conn = DATA_SOURCE.getConnection();
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(statement);
-
-            hm.put("rs", rs);
-            hm.put("stmt", stmt);
-            hm.put("conn", conn);
+        Connection conn = DATA_SOURCE.getConnection();
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(statement);
+        
+        hm.put("rs", rs);
+        hm.put("stmt", stmt);
+        hm.put("conn", conn);
         } catch (SQLException ex) {
-            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.SEVERE, null, ex);
         }
-        return hm;
+        return hm;*/
     }
 }
