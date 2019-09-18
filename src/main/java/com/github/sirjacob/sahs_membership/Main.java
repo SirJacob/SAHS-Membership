@@ -84,8 +84,8 @@ public class Main {
                 } else {
                     new FadingPopup(FADING_POPUP_PREFIX + "Failed!");
                 }
-                List<String> lines = CanvasAPIRequest.names;
-                Path file = Paths.get("export_names.txt");
+                List<String> lines = CanvasAPIRequest.emails;
+                Path file = Paths.get("export_emails.txt");
                 try {
                     Files.write(file, lines, StandardCharsets.UTF_8);
                 } catch (IOException ex) {

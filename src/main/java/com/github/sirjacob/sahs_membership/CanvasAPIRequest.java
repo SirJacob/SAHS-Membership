@@ -24,7 +24,7 @@ public class CanvasAPIRequest {
     private static final long COURSE_ID = 57030000000004505L;
     static String access_token;
     private static final String URL_PREFIX = "https://canvas.instructure.com/api/v1/";
-    public static ArrayList<String> names = new ArrayList();
+    public static ArrayList<String> emails = new ArrayList();
 
     private static final ArrayList<String> LOGIN_IDS = new ArrayList();
     private static int page = 1;
@@ -172,10 +172,7 @@ public class CanvasAPIRequest {
                 String statement = String.format("INSERT INTO `members` (`login_id`, `name`, `enrollment_type`, `avatar_url`) VALUES ('%s', '%s', '%s', '%s') ON DUPLICATE KEY UPDATE `enrollment_type` = '%s', `avatar_url` = '%s';",
                         login_id, name, enrollment_type, avatar_url, enrollment_type, avatar_url);
                 System.out.println(statement);
-                if(!"student".equals(enrollment_type)){
-                    name = "**" + name;
-                }
-                names.add(name);
+                emails.add(login_id+"@marymount.edu");
                 MySQL.executeUpdate(statement);
             }
 
